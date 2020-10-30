@@ -163,6 +163,7 @@ function usernameCheck(){
         field.className = "formInputWrong";
         document.getElementById("usernameInfo").className = "formInfoShow";
         document.getElementById("usernameInfo").innerText = "Nazwa musi składać się z 3-12 małych liter" 
+        validateForm();
     }
 }
 
