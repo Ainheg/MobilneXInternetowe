@@ -1,0 +1,10 @@
+form ul {
+    list-style-type: none;
+}
+form ul li {
+    padding: 4px 8px;
+}
+.formInfo {
+    display: none;
+    font-size: 12px;
+}
