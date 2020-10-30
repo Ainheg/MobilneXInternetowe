@@ -12,10 +12,10 @@ form ul li {
     font-size: 12px;
 }
 .formInputWhite {
-    background-color: "white";
+    background-color: white;
 }
 .formInputInitial {
-    background-color: "initial";
+    background-color: initial;
 }
 .formInputWrong {
     background-color: #ff7373;
