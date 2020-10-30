@@ -6,5 +6,8 @@ form ul li {
 }
 .formInfo {
     display: none;
+}
+.formInfoShow {
+    display: block;
     font-size: 12px;
 }

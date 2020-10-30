@@ -43,11 +43,11 @@ function firstNameCheck(){
     isFirstNameOk = nameRegex.test(field.value);
     if (!isFirstNameOk){
         field.style.backgroundColor = wrongColor;
-        document.getElementById("firstNameInfo").style.display = "block";
+        document.getElementById("firstNameInfo").className = "formInfoShow";
         document.getElementById("firstNameInfo").innerText = "Imię musi zaczynać się wielką literą i mieć co najmniej 2 znaki" 
     } else {
         field.style.backgroundColor="white";
-        document.getElementById("firstNameInfo").style.display = "none";
+        document.getElementById("firstNameInfo").className = "formInfo";
     }
     validateForm();
 }
@@ -57,11 +57,11 @@ function lastNameCheck(){
     isLastNameOk = nameRegex.test(field.value);
     if (!isLastNameOk){
         field.style.backgroundColor = wrongColor;
-        document.getElementById("lastNameInfo").style.display = "block";
+        document.getElementById("lastNameInfo").className = "formInfoShow";
         document.getElementById("lastNameInfo").innerText = "Nazwisko musi zaczynać się wielką literą i mieć co najmniej 2 znaki" 
     } else {
         field.style.backgroundColor="white";
-        document.getElementById("lastNameInfo").style.display = "none";
+        document.getElementById("lastNameInfo").className = "formInfo";
     }
     validateForm();
 }
@@ -73,18 +73,18 @@ function passwordCheck(){
     if (isPasswordOk) {
         isPasswordMatched = (firstField.value == secondField.value)  
         firstField.style.backgroundColor = "white";
-        document.getElementById("passwordInfo").style.display = "none";
+        document.getElementById("passwordInfo").className = "formInfo";
         if (!isPasswordMatched) {
             secondField.style.backgroundColor = wrongColor;
-            document.getElementById("repeatPasswordInfo").style.display = "block";
+            document.getElementById("repeatPasswordInfo").className = "formInfoShow";
             document.getElementById("repeatPasswordInfo").innerText = "Hasła się nie zgadzają" 
         } else {
             secondField.style.backgroundColor = "white";
-            document.getElementById("repeatPasswordInfo").style.display = "none";
+            document.getElementById("repeatPasswordInfo").className = "formInfo";
         }
     } else {
         firstField.style.backgroundColor = wrongColor;
-        document.getElementById("passwordInfo").style.display = "block";
+        document.getElementById("passwordInfo").className = "formInfoShow";
         document.getElementById("passwordInfo").innerText = "Hasło musi mieć co najmniej 8 znaków" 
     }
     validateForm();
@@ -97,19 +97,19 @@ function fileCheck(){
         isPhotoOk = (photo.type == "image/jpeg" || photo.type == "image/png")
         if(!isPhotoOk){
             field.style.backgroundColor = wrongColor;
-            document.getElementById("photoInfo").style.display = "block";
+            document.getElementById("photoInfo").className = "formInfoShow";
             document.getElementById("photoInfo").innerText = "Wybrany plik nie jest zdjęciem"
         } else {
             field.style.backgroundColor = "initial";
-            document.getElementById("photoInfo").style.display = "none";
+            document.getElementById("photoInfo").className = "formInfo";
         }
     } else if (field.files.length > 1) {
         field.style.backgroundColor = wrongColor;
-        document.getElementById("photoInfo").style.display = "block";
+        document.getElementById("photoInfo").className = "formInfoShow";
         document.getElementById("photoInfo").innerText = "Wybrano więcej niż jedno zdjęcie"
     } else {
         field.style.backgroundColor = wrongColor;
-        document.getElementById("photoInfo").style.display = "block";
+        document.getElementById("photoInfo").className = "formInfoShow";
         document.getElementById("photoInfo").innerText = "Nie wybrano zdjęcia"
     }
     validateForm();
@@ -118,11 +118,11 @@ function fileCheck(){
 function sexCheck(){
     if(document.getElementById("fRadio").checked || document.getElementById("mRadio").checked){
             document.getElementById("sexSelect").style.backgroundColor= "initial";
-            document.getElementById("sexInfo").style.display = "none";
+            document.getElementById("sexInfo").className = "formInfo";
             isSexSelected = true;
     } else {
         document.getElementById("sexSelect").style.backgroundColor = wrongColor;
-        document.getElementById("sexInfo").style.display = "block";
+        document.getElementById("sexInfo").className = "formInfoShow";
         document.getElementById("sexInfo").innerText = "Nie wybrano płci"
     }
     validateForm();
@@ -149,11 +149,11 @@ function usernameCheck(){
                 }
                 if(!isUsernameAvailable){
                     field.style.backgroundColor = wrongColor;
-                    document.getElementById("usernameInfo").style.display = "block";
+                    document.getElementById("usernameInfo").className = "formInfoShow";
                     document.getElementById("usernameInfo").innerText = "Nazwa użytkownika jest zajęta"
                 } else {
                     field.style.backgroundColor="white";
-                    document.getElementById("usernameInfo").style.display = "none";
+                    document.getElementById("usernameInfo").className = "formInfo";
                 }
             }
         }
@@ -161,7 +161,7 @@ function usernameCheck(){
     } else {
         isUsernameAvailable = false;
         field.style.backgroundColor = wrongColor;
-        document.getElementById("usernameInfo").style.display = "block";
+        document.getElementById("usernameInfo").className = "formInfoShow";
         document.getElementById("usernameInfo").innerText = "Nazwa musi składać się z 3-12 małych liter" 
     }
     validateForm();
