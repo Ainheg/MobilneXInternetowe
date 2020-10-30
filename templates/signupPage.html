@@ -7,24 +7,24 @@
         <form class="col-9" id="registerForm" action="https://infinite-hamlet-29399.herokuapp.com/sender/register" method="POST" enctype='multipart/form-data'>
             <ul>
                 <li>Formularz rejestracji użytkownika</li>
-                <li><input type="text" name="firstname" id="firstNameField" placeholder="Imię"/></li>
+                <li><input type="text" name="firstname" id="firstNameField" placeholder="Imię" class="formInputWhite"/></li>
                 <li class="formInfo" id="firstNameInfo"></li>
-                <li><input type="text" name="lastname" id="lastNameField" placeholder="Nazwisko"/></li>
+                <li><input type="text" name="lastname" id="lastNameField" placeholder="Nazwisko" class="formInputWhite"/></li>
                 <li class="formInfo" id="lastNameInfo"></li>
-                <li><input type="text" name="login" id="usernameField" placeholder="Nazwa użytkownika"/></li>
+                <li><input type="text" name="login" id="usernameField" placeholder="Nazwa użytkownika" class="formInputWhite"/></li>
                 <li class="formInfo" id="usernameInfo"></li>
-                <li id="sexSelect">Płeć:
+                <li id="sexSelect" class="formInputInitial">Płeć:
                     <input type="radio" id="fRadio" name="sex" value="F">
                     <label for="F">Kobieta</label>
                     <input type="radio" id="mRadio" name="sex" value="M">
                     <label for="M">Mężczyzna</label>
                 </li>
                 <li class="formInfo" id="sexInfo"></li>
-                <li><input type="password" name="password" id="passwordField" placeholder="Hasło"/></li>
+                <li><input type="password" name="password" id="passwordField" placeholder="Hasło" class="formInputWhite"/></li>
                 <li class="formInfo" id="passwordInfo"></li>
-                <li><input type="password" name="repeatPassword" id="repeatPasswordField" placeholder="Powtórz hasło"/></li>
+                <li><input type="password" name="repeatPassword" id="repeatPasswordField" placeholder="Powtórz hasło" class="formInputWhite"/></li>
                 <li class="formInfo" id="repeatPasswordInfo"></li>
-                <li>Zdjęcie: <input type="file" name="photo" accept="image/png, image/jpeg" id="photoField"/></li>
+                <li>Zdjęcie: <input type="file" name="photo" accept="image/png, image/jpeg" id="photoField" class="formInputInitial"/></li>
                 <li class="formInfo" id="photoInfo"></li>
                 <li><input type="submit" id="submitButton" name="submit" disabled/></li>
             </ul>
