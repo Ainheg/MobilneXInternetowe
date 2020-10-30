@@ -151,9 +151,10 @@ function usernameCheck(){
                     document.getElementById("usernameInfo").className = "formInfoShow";
                     document.getElementById("usernameInfo").innerText = "Nazwa użytkownika jest zajęta"
                 } else {
-                    field.clssName = "formInputWhite";
+                    field.className = "formInputWhite";
                     document.getElementById("usernameInfo").className = "formInfo";
                 }
+                validateForm();
             }
         }
         xhr.send();
@@ -163,7 +164,6 @@ function usernameCheck(){
         document.getElementById("usernameInfo").className = "formInfoShow";
         document.getElementById("usernameInfo").innerText = "Nazwa musi składać się z 3-12 małych liter" 
     }
-    validateForm();
 }
 
 function validateForm(){
