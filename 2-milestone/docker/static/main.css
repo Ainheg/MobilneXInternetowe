@@ -1,0 +1,94 @@
+* {
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 20px;
+}
+[class*="col-"] {
+    width: 100%;
+    float: left;
+}
+body {
+    font-family: 'Helvetica';
+    background-image: url("/static/images/memphis-mini.png");
+    /* Background pattern from Toptal Subtle Patterns */
+}
+.bold {
+    font-weight: bold;
+}
+nav {
+    list-style-type: none;
+    margin-top: 10px;
+}
+a {
+    text-decoration: none;
+}
+nav li a{
+    display: block;
+    font-weight: normal;
+    padding: 8px 16px;
+    font-size: 24px;
+}
+nav li a:hover {
+    font-weight: bold;
+}
+img {
+    max-width: 250px;
+    max-height: auto;
+}
+.row {
+    flex: 1 0 auto;
+}
+.row::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: auto;
+}
+header div {
+    padding: 8px 16px;
+}
+footer {
+    padding-top: 10px;
+}
+#hidablePresentation {
+    display: none;
+}
+#companyName {
+    font-family: 'Comic Sans MS';
+    font-size: 40px;
+    font-weight: bold;
+}
+.moreImportantFooterPart {
+    padding: 8px 16px;
+}
+.lessImportantFooterPart {
+    font-size: 10px;
+}
+.lessImportantFooterPart a {
+    font-size: 10px;
+}
+@media only screen and (min-width: 768px) {
+    * {
+        font-size: 18px;
+    }
+    .col-1 {width: 8.33%;}
+    .col-2 {width: 16.66%;}
+    .col-3 {width: 25%;}
+    .col-4 {width: 33.33%;}
+    .col-5 {width: 41.66%;}
+    .col-6 {width: 50%;}
+    .col-7 {width: 58.33%;}
+    .col-8 {width: 66.66%;}
+    .col-9 {width: 75%;}
+    .col-10 {width: 83.33%;}
+    .col-11 {width: 91.66%;}
+    .col-12 {width: 100%;}
+    #hidablePresentation {
+        display: block;
+    }
+}
