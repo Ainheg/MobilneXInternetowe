@@ -1,0 +1,19 @@
+{% extends 'main.html' %}
+{% block head %}
+    <link rel="stylesheet" href="/static/form.css"/>
+{% endblock %}
+{% block body %}
+        <form class="col-9" id="loginForm" action="{{url_for('sign_in_process', _external=True)}}" method="POST" enctype='multipart/form-data'>
+            <ul>
+                <li>Logowanie użytkownika</li>
+                {% for mesg in get_flashed_messages() %}
+                <li class="flashMessage">{{ mesg }}</li>
+                {% endfor %}
+                <li><input type="text" name="login" id="usernameField" placeholder="Nazwa użytkownika" class="formInputWhite"/></li>
+                <li class="formInfo" id="usernameInfo"></li>
+                <li><input type="password" name="password" id="passwordField" placeholder="Hasło" class="formInputWhite"/></li>
+                <li class="formInfo" id="passwordInfo"></li>
+                <li><input type="submit" id="submitButton" name="submit" value="Zaloguj się"/></li>
+            </ul>
+        </form>
+{% endblock %}
