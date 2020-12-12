@@ -3,15 +3,19 @@ from bcrypt import hashpw, gensalt, checkpw
 from flask_session import Session
 from os import getenv
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
+from jwt import encode, decode
 from validation import *
 import redis
+import requests
+import json
+
 
 
 load_dotenv()
 #redislabs
-db = redis.Redis(host = getenv('REDIS_URL'), port = getenv('REDIS_PORT'), password = getenv('REDIS_PASS'), db=0)
+db = redis.Redis(host = getenv('REDIS_URL'), port = getenv('REDIS_PORT'), password = getenv('REDIS_PASS'), db=0, decode_responses=False)
 #redis lokalny
 #db = redis.Redis(host = '192.168.0.222', port = 6379, db=0)
 
@@ -23,11 +27,13 @@ else:
 app = Flask(__name__)
 SESSION_TYPE = 'redis'
 SESSION_REDIS = db
-SESSION_COOKIE_SECURE = True
+#SESSION_COOKIE_SECURE = True
 #Przeglądarki blokują ciastka z tagiem Secure
 #wysłane z http
 app.config.from_object(__name__)
 app.secret_key = getenv('SECRET_KEY')
+JWT_SECRET = getenv('JWT_SECRET')
+API_URL = getenv('API_URL')
 ses = Session(app)
 
 def is_database_connected():
@@ -39,11 +45,17 @@ def is_user_in_database(username):
         return None
     return db.hexists(f"user:{username}", "password")
 
-def is_label_in_database(labelId):
-    if not is_database_connected():
-        flash("Błąd połączenia z bazą danych")
-        return None
-    return db.hexists(labelId, "uid")
+def generate_token():
+    payload = {
+        'iss': 'well-sent-web-client',
+        'sub': 'sender-app',
+        'usr': session['username'],
+        'aud': 'well-sent-web-service',
+        'exp': datetime.utcnow() + timedelta(seconds = 30)
+    }
+    token = encode(payload, JWT_SECRET, algorithm='HS256')
+    print(token)
+    return token
 
 def register_user(username, password, firstname, lastname, email, address):
     if not is_database_connected():
@@ -86,39 +98,57 @@ def is_user_logged_in():
     return 'username' in session
 
 def load_labels():
-    if not is_database_connected():
-        flash("Błąd połączenia z bazą danych")
-        return None
-    keys = db.scan_iter(f"{session['username']}:*")
-    if keys:
-        labels = list()
-        for key in keys:
-            label = dict()
-            label["name"] = db.hget(key, 'name').decode()
-            label["deliverto"] = db.hget(key, 'deliverto').decode()
-            label["size"] = db.hget(key, 'size').decode()
-            label["uid"] = db.hget(key, 'uid').decode()
-            label["key"] = key
-            labels.append(label)
-        return labels
-    return ["Jeszcze tu nic nie ma."]
+    token = generate_token()
+    head = {'Authorization': f'Bearer {token.decode()}'}
+    try: 
+        response = requests.get(API_URL + '/labels', headers=head)
+    except:
+        flash("Nie udało się nawiązać połączenia z API")
+        return []
+    labels = []
+    if response.status_code == 200:
+        response = response.json()
+        labels = response['_embedded']['labels']
+    else:
+        flash(str(response.status_code) + ' ' + response.json()['message'])
+    return labels
 
 def get_delivery_points():
     #Można by było też pobierać je z bazy, jednak uznałem, że w tym momencie byłaby to niepotrzebna komplikacja
     return ["WS-1", "WS-2", "WS-3"]
 
 def add_label_to_database(name, deliveryPointID, size):
-    if not is_database_connected():
-        flash("Błąd połączenia z bazą danych")
-        return None
-    if not is_user_logged_in():
-        return None
-    label = dict()
-    label["name"] = name
-    label["deliverto"] = deliveryPointID
-    label["size"] = size
-    label["uid"] = str(uuid4())
-    return db.hset(f"{session['username']}:{label['uid']}", mapping=label)
+    label = {
+        "name":name,
+        "deliverto":deliveryPointID,
+        "size":size
+    }
+    token = generate_token()
+    head = {'Authorization': f'Bearer {token.decode()}'}
+    try: 
+        response = requests.post(API_URL + '/labels', headers=head, json=label)
+    except:
+        flash("Nie udało się nawiązać połączenia z API")
+        return False
+    if response.status_code == 200:
+        return True
+    else:
+        flash(str(response.status_code) + ' ' + response.json()['message'])
+        return False
+
+def delete_label_from_database(labelid):
+    token = generate_token()
+    head = {'Authorization': f'Bearer {token.decode()}'}
+    try: 
+        response = requests.delete(API_URL + f'/labels/{labelid}', headers=head)
+    except:
+        flash("Nie udało się nawiązać połączenia z API")
+        return False
+    if response.status_code == 204:
+        return True
+    else:
+        flash(str(response.status_code) + ' ' + response.json()['message'])
+        return False
 
 @app.context_processor
 def pass_to_templates():
@@ -208,17 +238,23 @@ def sign_in():
 @app.route("/sender/login", methods = ["POST"])
 def sign_in_process():
     username = request.form.get("login")
+    print(username)
     if not username:
         flash("Nie podano nazwy użytkownika")
     password = request.form.get("password")
+    print(password)
     if not password:
+        print("Nie ma hasła")
         flash("Nie podano hasła")
         return redirect(url_for("sign_in"))
     if not (verify_user(username, password)):
+        print("Nie zgadza się")
         flash("Niepoprawna kombinacja nazwy uzytkownika i hasła")
         return redirect(url_for("sign_in"))
     session["username"] = username
+    print(session["username"])
     session["login-time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(session['login-time'])
     return redirect(url_for('dashboard'))
 
 @app.route("/sender/logout", methods = ["GET"])
@@ -275,16 +311,11 @@ def delete_label(labelID):
     if not is_user_logged_in():
         flash("Obszar niedostępny dla niezalogowanych użytkowników")
         return redirect(url_for("sign_in"))
-    if not session["username"] in labelID:
-        flash("Próbowałeś/aś usunąć nie swoją etykietę")
-        return redirect(url_for("dashboard"))
-    if is_label_in_database(labelID):
-        keys = db.hgetall(labelID)
-        for key in keys:
-            db.hdel(labelID, key)
-        if is_label_in_database(labelID):
-            flash("Nie udało się usunąć etykiety")
-        return redirect(url_for("dashboard"))
-
+    success = delete_label_from_database(labelID)
+    if success:
+        flash("Pomyślnie usunięto etykietę")
+    else:
+        flash("Wystąpił błąd")
+    return redirect(url_for("dashboard"))
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
