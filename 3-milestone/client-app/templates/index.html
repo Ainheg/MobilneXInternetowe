@@ -1,6 +1,11 @@
 {% extends 'main.html' %}
 {% block body %}
         <div class="col-9">
+            <ul>
+                {% for mesg in get_flashed_messages() %}
+                <li class="flashMessage">{{ mesg }}</li>
+                {% endfor %}
+            </ul>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
             Etiam porttitor, diam eget maximus consequat, turpis odio porta ipsum, 
             at ullamcorper nisi nulla quis odio. Sed velit mauris, malesuada viverra 

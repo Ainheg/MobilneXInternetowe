@@ -3,4 +3,5 @@ gunicorn==19.9.0
 bcrypt
 Flask-Session
 python-dotenv
+pyjwt
 redis

@@ -1,6 +1,6 @@
 Flask==1.1.2
 gunicorn==19.9.0
-bcrypt
-Flask-Session
+pyjwt
 python-dotenv
 redis
+flask-hal

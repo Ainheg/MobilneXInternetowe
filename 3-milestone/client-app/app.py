@@ -27,7 +27,7 @@ else:
 app = Flask(__name__)
 SESSION_TYPE = 'redis'
 SESSION_REDIS = db
-#SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 #Przeglądarki blokują ciastka z tagiem Secure
 #wysłane z http
 app.config.from_object(__name__)
@@ -45,10 +45,10 @@ def is_user_in_database(username):
         return None
     return db.hexists(f"user:{username}", "password")
 
-def generate_token():
+def generate_token(sub):
     payload = {
         'iss': 'well-sent-web-client',
-        'sub': 'sender-app',
+        'sub': sub,
         'usr': session['username'],
         'aud': 'well-sent-web-service',
         'exp': datetime.utcnow() + timedelta(seconds = 30)
@@ -98,20 +98,36 @@ def is_user_logged_in():
     return 'username' in session
 
 def load_labels():
-    token = generate_token()
-    head = {'Authorization': f'Bearer {token.decode()}'}
-    try: 
+    token = generate_token('sender-get-labels')
+    head = {'Authorization': f'Bearer {token.decode()}'}  
+    try:  
         response = requests.get(API_URL + '/labels', headers=head)
-    except:
-        flash("Nie udało się nawiązać połączenia z API")
-        return []
-    labels = []
-    if response.status_code == 200:
+        if not response.status_code == 200: 
+            flash("Ładowanie etykiet: " + str(response.status_code) + ' ' + response.json()['message'])
+            return []
+        labels = []
         response = response.json()
         labels = response['_embedded']['labels']
-    else:
-        flash(str(response.status_code) + ' ' + response.json()['message'])
+    except Exception:
+        flash("Nie udało się nawiązać połączenia z API, spróbuj później (być może instancja heroku jest uśpiona)")
+        return []
     return labels
+
+def load_packages():
+    token = generate_token('sender-get-packages')
+    head = {'Authorization': f'Bearer {token.decode()}'} 
+    try:  
+        response = requests.get(API_URL + '/packages', headers=head)
+        if not response.status_code == 200: 
+            flash("Ładowanie paczek: " + str(response.status_code) + ' ' + response.json()['message'])
+            return []
+        packages = []
+        response = response.json()
+        packages = response['_embedded']['packages']
+    except Exception:
+        flash("Nie udało się nawiązać połączenia z API, spróbuj później (być może instancja heroku jest uśpiona)")
+        return []
+    return packages
 
 def get_delivery_points():
     #Można by było też pobierać je z bazy, jednak uznałem, że w tym momencie byłaby to niepotrzebna komplikacja
@@ -123,32 +139,33 @@ def add_label_to_database(name, deliveryPointID, size):
         "deliverto":deliveryPointID,
         "size":size
     }
-    token = generate_token()
+    token = generate_token('sender-post-label')
     head = {'Authorization': f'Bearer {token.decode()}'}
     try: 
         response = requests.post(API_URL + '/labels', headers=head, json=label)
-    except:
+        if response.status_code == 201:
+            return True
+        else:
+            flash(str(response.status_code) + ' ' + response.json()['message'])
+            return False
+    except Exception:
         flash("Nie udało się nawiązać połączenia z API")
-        return False
-    if response.status_code == 200:
-        return True
-    else:
-        flash(str(response.status_code) + ' ' + response.json()['message'])
         return False
 
 def delete_label_from_database(labelid):
-    token = generate_token()
+    token = generate_token('sender-delete-label')
     head = {'Authorization': f'Bearer {token.decode()}'}
     try: 
         response = requests.delete(API_URL + f'/labels/{labelid}', headers=head)
-    except:
+        if response.status_code == 204:
+            return True
+        else:
+            flash(str(response.status_code) + ' ' + response.json()['message'])
+            return False
+    except Exception:
         flash("Nie udało się nawiązać połączenia z API")
         return False
-    if response.status_code == 204:
-        return True
-    else:
-        flash(str(response.status_code) + ' ' + response.json()['message'])
-        return False
+    
 
 @app.context_processor
 def pass_to_templates():
@@ -267,7 +284,9 @@ def dashboard():
     if not is_user_logged_in():
         flash("Obszar niedostępny dla niezalogowanych użytkowników")
         return redirect(url_for('sign_in'))
-    return render_template("dashboard.html", load_labels=load_labels, get_delivery_points=get_delivery_points)
+    labels = load_labels()
+    packages = load_packages()
+    return render_template("dashboard.html", labels=labels, packages=packages, get_delivery_points=get_delivery_points)
 
 @app.route("/sender/register/username-check/<username>", methods = ["GET"])
 def check_username(username):
@@ -318,4 +337,4 @@ def delete_label(labelID):
         flash("Wystąpił błąd")
     return redirect(url_for("dashboard"))
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000)
+    app.run(port=5000)

@@ -35,18 +35,15 @@ def authorization():
 def is_label_in_database(labelId):
     return db.hexists(labelId, "uid")
 
+def is_package_in_database(packageid):
+    return db.hexists(packageid, "uid")
+
 def get_user_labels(username):
     keys = db.scan_iter(f"label:{username}:*")
     if keys:
         labels = list()
         for key in keys:
-            label = dict()
-            label["name"] = db.hget(key, 'name')
-            label["deliverto"] = db.hget(key, 'deliverto')
-            label["size"] = db.hget(key, 'size')
-            label["uid"] = db.hget(key, 'uid')
-            label["status"] = db.hget(key, 'status')
-            label["key"] = key
+            label = db.hgetall(key)
             labels.append(label)
         return labels
     return None
@@ -56,26 +53,45 @@ def get_all_labels():
     if keys:
         labels = list()
         for key in keys:
-            label = dict()
-            label["name"] = db.hget(key, 'name').decode()
-            label["deliverto"] = db.hget(key, 'deliverto').decode()
-            label["size"] = db.hget(key, 'size').decode()
-            label["uid"] = db.hget(key, 'uid').decode()
-            label["status"] = db.hget(key, 'status').decode()
-            label["key"] = key
+            label = db.hgetall(key)
             labels.append(label)
         return labels
     return None
 
+def get_user_packages(username):
+    keys = db.scan_iter(f"package:{username}:*")
+    if keys:
+        packages = list()
+        for key in keys:
+            package = db.hgetall(key)
+            packages.append(package)
+        return packages
+    return None
+
+def get_all_packages():
+    keys = db.scan_iter(f"package:*")
+    if keys:
+        packages = list()
+        for key in keys:
+            package = db.hgetall(key)
+            packages.append(package)
+        return packages
+    return None
 
 def add_label_to_database(name, deliveryPointID, size):
     label = dict()
     label["name"] = name
+    label["sender"] = g.authorization.get('usr')
     label["deliverto"] = deliveryPointID
     label["size"] = size
-    label["status"] = 'nie nadana' 
     label["uid"] = str(uuid4())
-    return db.hset(f"label:{g.authorization.get('usr')}:{label['uid']}", mapping=label)
+    return db.hset(f"label:{label['sender']}:{label['uid']}", mapping=label)
+
+def add_package_to_database(key):
+    package = db.hgetall(key)
+    package["status"] = 'Nadana'
+    delete_label_from_database(key)
+    return db.hset(f"package:{package['sender']}:{package['uid']}", mapping=package)
 
 def delete_label_from_database(labelid):
     keys = db.hgetall(labelid)
@@ -83,41 +99,61 @@ def delete_label_from_database(labelid):
         db.hdel(labelid, key)
     return not is_label_in_database(labelid)
     
-def get_label_status(labelid):
-    print(labelid)
-    print(db.hget(labelid, 'status'))
-    return db.hget(labelid, 'status')
+def get_package_status(packageid):
+    return db.hget(packageid, 'status')
+
+def update_package_status_in_database(packageid):
+    current_status = get_package_status(packageid)
+    print(current_status)
+    if current_status == "Nadana":
+        return db.hset(packageid, 'status', "W drodze")
+    if current_status == "W drodze":
+        return db.hset(packageid, 'status', 'Dostarczona')
+    if current_status == "Dostarczona":
+        return -1
+    return 1
 
 @app.route('/api/labels', methods = ['GET'])
 def load_labels():
     sub = g.authorization.get('sub')
     user = g.authorization.get('usr')
-    if sub is None or user is None:
+    iss = g.authorization.get('iss')
+    if sub is None or user is None or iss is None:
         return {"message": "Brak autoryzacji"}, 401
-    if sub == "sender-app":
+    if not is_database_connected():
+        return {"message": "Nie można połączyć z bazą danych"}, 503
+    if sub == "sender-get-labels":
+        if iss != 'well-sent-web-client':
+            return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
         labels = get_user_labels(user)
     elif sub == "courier-app":
+        if iss != 'well-sent-courier-app':
+            return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
         labels = get_all_labels()
     else:
         return {"message": "Zawartość niedostępna"}, 403
-    if not is_database_connected():
-        return {"message": "Nie można połączyć z bazą danych"}, 503
     label_list = []
     for label in labels:
         links = []
-        links.append(Link('self', '/labels/' + label['uid']))
-        links.append(Link('delete', '/labels/' + label['uid']))
-        labeldata = { 'uid':label['uid'], 'name':label['name'], 'deliverto':label['deliverto'], 'size':label['size'], 'status':label['status'] }
-        label_list.append(Embedded(data = labeldata, links = links))
+        if sub == "sender-app":
+            links.append(Link('labels:delete', '/api/labels/' + label['uid']))
+        if sub == "courier-app":
+            links.append(Link('packages:create', '/api/packages/' + label['uid']))
+        label_list.append(Document(data=label, links=links))
     document = Document(embedded={'labels':Embedded(data=label_list)})
-    #print(document.to_json())
     return document.to_json(), 200
     
 @app.route('/api/labels', methods = ['POST'])
 def add_label():
     user = g.authorization.get('usr')
-    if user is None:
+    sub = g.authorization.get('sub')
+    iss = g.authorization.get('iss')
+    if user is None or sub is None or iss is None:
         return {"message": "Brak autoryzacji"}, 401
+    if sub != "sender-post-label":
+        return {"message": "Brak autoryzacji"}, 401
+    if iss != 'well-sent-web-client':
+        return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
     if not is_database_connected():
         return {"message": "Nie można połączyć z bazą danych"}, 503
     label = request.json
@@ -132,45 +168,122 @@ def add_label():
     if not add_label_to_database(name, deliverto, size):
         return {"message": "Nie udało się zapisać etykiety"}, 500
     links = []
-    links.append(Link('self', '/labels'))
-    return Document(data = {}, links=links).to_json(), 200
+    links.append(Link('self', '/api/labels'))
+    return Document(data = {}, links=links).to_json(), 201
 
 @app.route('/api/labels/<labelid>', methods = ['DELETE'])
 def delete_label(labelid):
     user = g.authorization.get('usr')
-    if user is None:
+    sub = g.authorization.get('sub')
+    iss = g.authorization.get('iss')
+    if user is None or sub is None or iss is None:
         return {"message": "Brak autoryzacji"}, 401
+    if sub != "sender-delete-label":
+        return {"message": "Brak autoryzacji"}, 401
+    if iss != 'well-sent-web-client':
+        return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
     if not is_database_connected():
         return {"message": "Nie można połączyć z bazą danych"}, 503
-    labelid = f'label:{user}:{labelid}'
+    lid = f'label:{user}:{labelid}'
     success = False
-    if is_label_in_database(labelid):
-        if get_label_status(labelid) == 'nie nadana':
-            success = delete_label_from_database(labelid)
-        else:
-            return {"message":"Nie można usunąć etykiety nadanej paczki"}, 403
+    if is_label_in_database(lid):
+        success = delete_label_from_database(lid)
     else:
-        return {"message":"Etykieta nie istnieje lub nie jesteś jej właścicielem"}, 404
+        pid = f'package:{user}:{labelid}'
+        if is_package_in_database(pid):
+            return {"message":"Została już nadana paczka z tą etykietą"}, 410
+        else:    
+            return {"message":"Etykieta nie istnieje"}, 404
     if not success:
         return {"message": "Nie udało się usunąć etykiety"}, 503
     return {"message": "Pomyślnie usunięto etykietę"}, 204
 
-@app.route('/api/labels/<labelid>', methods = ['PUT'])
-def update_label_status(labelid):
-
-    #TODO
-    
+@app.route('/api/packages', methods = ['GET'])
+def load_packages():
     sub = g.authorization.get('sub')
-    if sub is None:
+    user = g.authorization.get('usr')
+    iss = g.authorization.get('iss')
+    if sub is None or user is None or iss is None:
         return {"message": "Brak autoryzacji"}, 401
-    if sub == "courier-app":
-        update_label_status(labelid)
+    if sub == "sender-get-packages":
+        if iss != 'well-sent-web-client':
+            return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
+        packages = get_user_packages(user)
+    elif sub == "courier-app":
+        if iss != 'well-sent-courier-app':
+            return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
+        packages = get_all_packages()
     else:
-        return {"message": "Brak uprawnień do wykonania tej operacji"}, 403
+        return {"message": "Brak autoryzacji"}, 401
     if not is_database_connected():
         return {"message": "Nie można połączyć z bazą danych"}, 503
+    package_list = []
+    for package in packages:
+        links = []
+        if sub == "courier-app" and package["status"] != "Dostarczona":
+            links.append(Link('packages:update_status', '/api/packages/' + package['uid']))
+        package_list.append(Document(data=package, links=links))
+    document = Document(embedded={'packages':Embedded(data=package_list)})
+    return document.to_json(), 200
+
+@app.route('/api/packages/<packageid>', methods = ['PUT'])
+def update_package_status(packageid):
+    result = 0
+    user = g.authorization.get('usr')
+    sub = g.authorization.get('sub')
+    iss = g.authorization.get('iss')
+    if user is None or sub is None or iss is None:
+        return {"message": "Brak autoryzacji"}, 401
+    if sub != "courier-app":
+        return {"message": "Brak autoryzacji"}, 401
+    if iss != "well-sent-courier-app":
+        return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
+    if not is_database_connected():
+        return {"message": "Nie można połączyć z bazą danych"}, 503
+    if sub == "courier-app":
+        package_key = db.keys(f"package:*:{packageid}")
+        if len(package_key) == 1:
+            result = update_package_status_in_database(package_key[0])
+        elif len(package_key) > 1:
+            return {"message": "Błąd serwera, wiele etykiet o tym samym id"}, 500
+        else:
+            return {"message": "Brak paczki o takim id"}, 404
+    else:
+        return {"message": "Brak uprawnień do wykonania tej operacji"}, 403
+    if result == 0:
+        print(Document(data = {}).to_json())
+        return Document(data = {}).to_json(), 204
+    elif result == -1:
+        return {"message": "Nie można zmienić statusu dostarczonej paczki"}, 400
+    else:
+        return {"message": "Nie udało się zmienić statusu paczki"}, 500
     
-    
+@app.route('/api/packages/<packageid>', methods = ['POST'])
+def create_package(packageid):
+    user = g.authorization.get('usr')
+    sub = g.authorization.get('sub')
+    iss = g.authorization.get('iss')
+    if user is None or sub is None or iss is None:
+        return {"message": "Brak autoryzacji"}, 401
+    if sub != "courier-app":
+        return {"message": "Brak autoryzacji"}, 401
+    if iss != "well-sent-courier-app":
+        return {"message": "Funkcjonalność niedostępna z tego klienta"}, 403
+    if not is_database_connected():
+        return {"message": "Nie można połączyć z bazą danych"}, 503
+    if sub == "courier-app":
+        label_key = db.keys(f"label:*:{packageid}")
+        if len(label_key) == 1:
+            add_package_to_database(label_key[0])
+            links = []
+            links.append(Link('self', '/labels'))
+            return Document(data = {}, links=links).to_json(), 201
+        elif len(label_key) > 1:
+            return {"message": "Błąd serwera, wiele etykiet o tym samym id"}, 500
+        else:
+            return {"message": "Brak paczki o takim id"}, 404
+    else:
+        return {"message": "Brak uprawnień do wykonania tej operacji"}, 403
 
 if __name__ == "__main__":
-    app.run(debug=True, port=2137)
+    app.run(port=2100)
