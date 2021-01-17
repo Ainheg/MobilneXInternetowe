@@ -35,6 +35,7 @@ namespace CourierWinFormsApp
             httpClient = new HttpClient { BaseAddress = new Uri(API_URL) };
             client = c;
             oauth_token = t;
+            this.ControlBox = false;
             InitializeComponent();
             GenerateToken();
             httpClient.DefaultRequestHeaders.Add("Authorization", String.Format("Bearer {0}", token));

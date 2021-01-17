@@ -25,13 +25,11 @@ namespace CourierWinFormsApp
             };
             Client = new Auth0Client(clientOptions);
             clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
-            Attempts = 0;
             InitializeComponent();    
         }
         private async void OauthLogin()
         {
             var loginResult = await Client.LoginAsync();
-            Attempts++;
             if (loginResult.IsError)
             {
                 Console.WriteLine($"An error occurred during login: {loginResult.Error}");
@@ -47,7 +45,7 @@ namespace CourierWinFormsApp
         private void LoginClick(object sender, EventArgs e)
         {
             OauthLogin();
-            if (DialogResult == DialogResult.OK || Attempts > 3)
+            if (DialogResult == DialogResult.OK)
             {
                 this.Close();
             }

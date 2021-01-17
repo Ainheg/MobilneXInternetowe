@@ -135,7 +135,7 @@ namespace CourierWinFormsApp
             this.logoutButton.Name = "logoutButton";
             this.logoutButton.Size = new System.Drawing.Size(365, 43);
             this.logoutButton.TabIndex = 8;
-            this.logoutButton.Text = "Wyloguj się";
+            this.logoutButton.Text = "Wyloguj się i wyjdź";
             this.logoutButton.UseVisualStyleBackColor = true;
             this.logoutButton.Click += new System.EventHandler(this.Logout);
             // 
