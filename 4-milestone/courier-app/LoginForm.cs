@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Auth0.OidcClient;
+using dotenv.net;
+using dotenv.net.Utilities;
 
 namespace CourierWinFormsApp
 {
@@ -18,10 +20,11 @@ namespace CourierWinFormsApp
         public string Token { get; private set; }
         public LoginForm()
         {
+            DotEnv.AutoConfig();
             Auth0ClientOptions clientOptions = new Auth0ClientOptions
             {
-                Domain = "well-sent-couriers.eu.auth0.com",
-                ClientId = "dKuv6OR25nMxrmjHJCe5KtHypeD3EW97"
+                Domain = new EnvReader().GetStringValue("AUTH0_DOMAIN"),
+                ClientId = new EnvReader().GetStringValue("AUTH0_CLIENTID")
             };
             Client = new Auth0Client(clientOptions);
             clientOptions.PostLogoutRedirectUri = clientOptions.RedirectUri;
