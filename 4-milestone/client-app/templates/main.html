@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" href="/static/main.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <base href="{{url_for('index', _external=True)}}">
+    <script src="{{url_for('static', filename='poll.js')}}"></script>
+    <title>WellSent</title>
+    {% block head %}{% endblock%}
+</head>
+<body>
+    <header class="row">
+        <div class="col-3" id="logoBox">
+            <picture>
+                <img src="{{url_for('static', filename='images/logo.svg')}}">
+            </picture>
+        </div>
+        <div class="col-9">
+            <div id="companyName">WellSent</div>
+            <div id="hidablePresentation">Tylko u nas gwarancja dostarczenia do stu dni!</div>
+            <div id="nameplate">Dawid Rawski</div>
+        </div>
+    </header>
+    <div class="row">
+        <div class="col-3">
+            <div>{{user_info() | safe}}</div>
+            <nav id="navbar">
+                <li><a href="{{url_for('index')}}" id="homepageNav">Strona główna</a></li>
+                {% if not user_logged_in() %}
+                <li><a href="{{url_for('sign_in')}}" id="senderLoginNav">Logowanie</a></li>
+                <li><a href="{{url_for('sign_up')}}" id="senderSignupNav">Rejestracja</a></li>
+                {% else %}
+                <li><a href="{{url_for('dashboard')}}" id="dashboardNav">Kokpit</a></li>
+                <li><a href="{{url_for('logout')}}" id="logoutNav">Wyloguj się</a></li>
+                {% endif %}
+            </nav>
+        </div>
+    {% block body %}{% endblock %}
+    </div>
+    <footer>
+        <div class="moreImportantFooterPart">2020 | <a href="https://github.com/Ainheg/MobilneXInternetowe"> Repozytorium </a></div>
+        <div class="lessImportantFooterPart">Well icon made by <a href="https://www.flaticon.com/authors/icongeek26" title="Icongeek26">Icongeek26</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+        <div class="lessImportantFooterPart">Package icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a></div>
+    </footer>
+</body>

@@ -1,0 +1,6 @@
+Flask==1.1.2
+gunicorn==19.9.0
+pyjwt==1.7.1
+python-dotenv
+redis
+flask-hal
