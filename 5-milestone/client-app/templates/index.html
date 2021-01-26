@@ -1,0 +1,31 @@
+{% extends 'main.html' %}
+{% block body %}
+        <div class="col-9">
+            <ul>
+                {% for mesg in get_flashed_messages() %}
+                <li class="flashMessage">{{ mesg }}</li>
+                {% endfor %}
+            </ul>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+            Etiam porttitor, diam eget maximus consequat, turpis odio porta ipsum, 
+            at ullamcorper nisi nulla quis odio. Sed velit mauris, malesuada viverra 
+            interdum a, dapibus et nisi. Aliquam vehicula semper justo, at malesuada 
+            metus interdum non. Pellentesque ut ex vitae mi ornare posuere. Fusce 
+            elementum at odio eu suscipit. Sed fermentum diam blandit erat lobortis iaculis. 
+            Quisque feugiat dolor nec pretium lacinia. Mauris in mattis neque. 
+            Nullam auctor in risus a maximus. Fusce pretium feugiat turpis.
+            Nam accumsan molestie arcu in pulvinar. Aenean venenatis tellus velit,
+            id pellentesque est sollicitudin eu. Curabitur id erat porta enim consequat
+            dignissim non pellentesque felis. Aenean dapibus neque ornare lorem vestibulum 
+            commodo. Praesent felis felis, rutrum scelerisque scelerisque eu, maximus a mi. 
+            Ut eu tincidunt ipsum, a egestas justo. Nunc lobortis nec nulla ac tempor. 
+            Duis eget ultrices nibh. Proin maximus lacus et libero mattis, eu aliquet 
+            lectus commodo. Praesent euismod, odio a dapibus volutpat, ipsum ex consequat nunc, 
+            ac iaculis turpis nunc et sapien. Quisque ac consectetur mauris, et cursus lorem. 
+            Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec ut ex eu risus 
+            ultrices interdum vulputate quis ex. Class aptent taciti sociosqu ad litora torquent 
+            per conubia nostra, per inceptos himenaeos. Mauris pellentesque, ante a aliquet imperdiet, 
+            dui erat sagittis augue, ac dignissim ante neque eu mi. Vivamus fermentum leo ultrices 
+            convallis tempor.
+        </div>
+{% endblock %}
