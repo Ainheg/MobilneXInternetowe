@@ -125,7 +125,6 @@ def add_package_to_database(key):
     package["status"] = 'Nadana'
     delete_label_from_database(key)
     packageid = f"package:{package['sender']}:{package['uid']}"
-    make_invoice(packageid)
     return db.hset(packageid, mapping=package)
 
 def delete_label_from_database(labelid):
@@ -138,7 +137,9 @@ def get_package_status(packageid):
     return db.hget(packageid, 'status')
 
 def get_package_owner(packageid):
-    return db.hget(packageid, "sender")
+    owner = db.hget(packageid, "sender")
+    print(owner)
+    return owner
 
 def get_package_id(packageid):
     return db.hget(packageid, "uid")
@@ -372,6 +373,7 @@ def create_package(packageid):
             pstatus = get_package_status(pkey)
             puid = get_package_id(pkey)
             print(f"Paczka {puid} ma teraz status: {pstatus}")
+            make_invoice(pkey)
             add_notification(powner, f"Paczka {puid} ma teraz status: {pstatus}")
             links = []
             links.append(Link('self', '/labels'))

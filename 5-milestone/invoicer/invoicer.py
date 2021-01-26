@@ -16,17 +16,14 @@ queue = declared_queue.method.queue
 
 channel.queue_bind(exchange="invoices", queue=queue)
 
-print('Czekam na otrzymanie powiadomień o odebraniu paczki. Użyj CTRL+C, aby zakończyć działanie programu.')
+print('Czekam na otrzymanie powiadomień o nadaniu paczki. Użyj CTRL+C, aby zakończyć działanie programu.')
 
 def callback(ch, method, properties, body):
     try:
         body = json.loads(body)
-        print(body)
         package_id = body['id']
-        print(package_id)
         sender = body['sender']
         timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
-        print(timestamp)
         f = open(f'invoice_{package_id}_{timestamp}.txt', 'w', encoding='utf-8')
         f.write(f'Faktura do paczki {package_id}\n')
         f.write(f'Dla Pan/i {sender}\n')

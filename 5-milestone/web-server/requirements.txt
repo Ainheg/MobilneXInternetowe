@@ -5,4 +5,3 @@ python-dotenv
 redis
 flask-hal
 pika
-json
